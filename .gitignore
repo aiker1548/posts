@@ -1,0 +1,58 @@
+# Игнорировать файлы и папки, созданные операционной системой
+.DS_Store
+Thumbs.db
+
+# Игнорировать виртуальное окружение Python
+venv/
+env/
+*.pyc
+__pycache__/
+
+# Игнорировать файлы настроек IDE
+.idea/
+.vscode/
+
+# Игнорировать файлы логов
+*.log
+
+# Игнорировать локальные файлы конфигурации
+*.env
+*.env.local
+
+# Игнорировать файлы базы данных
+*.sqlite3
+*.db
+
+# Игнорировать временные файлы
+*.tmp
+*.bak
+*.swp
+
+# Игнорировать файлы зависимостей
+node_modules/
+
+.DS_Store
+node_modules
+/dist
+
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+node_modules
+
