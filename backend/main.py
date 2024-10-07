@@ -1,8 +1,14 @@
+import sys
+import os
+
+# Добавляем корневую директорию проекта в sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI
 from db import create_tables
 import logging
 from fastapi.middleware.cors import CORSMiddleware
-from routers import users_router, posts_router
+from routers import users_router, posts_router, tags_router
 
 
 # Set up logging
@@ -13,9 +19,9 @@ logging.basicConfig(
 app = FastAPI()
 
 # Include routers
-app.include_router(users_router)d
+app.include_router(users_router)
 app.include_router(posts_router)
-
+app.include_router(tags_router)
 
 # CORS configuration
 origins = ["*"]

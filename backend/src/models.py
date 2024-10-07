@@ -22,4 +22,7 @@ class PostResponse(BaseModel):
     author_id: int
     created_at: datetime
 
+class TagCreate(BaseModel):
+    name: str
+
 

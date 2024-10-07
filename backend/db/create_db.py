@@ -17,6 +17,7 @@ env_path = project_root / '.env'
 load_dotenv(dotenv_path=env_path)
 
 
+
 async def create_tables():
     commands = (
         '''
@@ -34,6 +35,26 @@ async def create_tables():
             content TEXT NOT NULL,
             author_id INTEGER NOT NULL REFERENCES users(id),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        ''',
+        '''
+        CREATE TABLE IF NOT EXISTS likes (
+            id SERIAL PRIMARY KEY,
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            user_id INTEGER NOT NULL REFERENCES users(id)
+        );
+        ''',
+        '''
+        CREATE TABLE IF NOT EXISTS tags (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL UNIQUE
+        );
+        ''',
+        '''
+        CREATE TABLE IF NOT EXISTS post_tags (
+            post_id INTEGER NOT NULL REFERENCES posts(id),
+            tag_id INTEGER NOT NULL REFERENCES tags(id),
+            PRIMARY KEY (post_id, tag_id)
         );
         '''
     )

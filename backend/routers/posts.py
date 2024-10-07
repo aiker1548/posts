@@ -1,6 +1,5 @@
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from backend.src.models import Post, PostResponse
 import asyncpg
 from fastapi import APIRouter, HTTPException, Depends
@@ -12,8 +11,8 @@ router = APIRouter()
 async def get_db_connection():
     conn = await asyncpg.connect(
         database=os.getenv("POSTGRES_DB"),
-        user=os.getenv("POSTGRES_USER"),
         host=os.getenv("POSTGRES_HOST"),
+        user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
         port=os.getenv("POSTGRES_PORT"),
     )
@@ -22,7 +21,7 @@ async def get_db_connection():
     finally:
         await conn.close()
 
-@router.post("/posts", response_model=PostResponse)
+@router.post("/posts/create", response_model=PostResponse)
 async def create_post(post: Post, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
         query = """
@@ -52,7 +51,15 @@ async def get_posts(conn: asyncpg.Connection = Depends(get_db_connection)):
 @router.get("/posts/{post_id}", response_model=PostResponse)
 async def get_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
-        query = "SELECT id, title, content, author_id, created_at FROM posts WHERE id = $1"
+        query = """
+        SELECT p.id, p.title, p.content, p.author_id, p.created_at,
+               ARRAY_AGG(t.name) AS tags
+        FROM posts p
+        LEFT JOIN post_tags pt ON p.id = pt.post_id
+        LEFT JOIN tags t ON pt.tag_id = t.id
+        WHERE p.id = $1
+        GROUP BY p.id, p.title, p.content, p.author_id, p.created_at;
+        """
         row = await conn.fetchrow(query, post_id)
         if row:
             return PostResponse(**dict(row))
@@ -63,7 +70,7 @@ async def get_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_conne
             status_code=500, detail=f"Ошибка при получении поста: {str(error)}"
         )
 
-@router.put("/posts/{post_id}", response_model=PostResponse)
+@router.put("/posts/update/{post_id}", response_model=PostResponse)
 async def update_post(post_id: int, post: Post, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
         query = """
@@ -82,7 +89,7 @@ async def update_post(post_id: int, post: Post, conn: asyncpg.Connection = Depen
             status_code=500, detail=f"Ошибка при обновлении поста: {str(error)}"
         )
 
-@router.delete("/posts/{post_id}")
+@router.delete("/posts/delete/{post_id}")
 async def delete_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
         query = "DELETE FROM posts WHERE id = $1"
@@ -95,4 +102,5 @@ async def delete_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_co
         raise HTTPException(
             status_code=500, detail=f"Ошибка при удалении поста: {str(error)}"
         )
+
 
