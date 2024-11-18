@@ -1,7 +1,11 @@
 <template>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;500&display=swap" rel="stylesheet">
+
     <div class="top-bar">
         <div class="top-bar-left">
-            <h1 class="blog-title">Blog</h1>
+            <router-link to="/home" class="blog-title" >blog</router-link>
+            <router-link to="/myposts">Мои посты</router-link>
+            <router-link to="/createpost">Создать пост</router-link>
         </div>
         <div class="top-bar-right">
             <ProfileMenu @logoutEvent="logout"/>
@@ -55,4 +59,15 @@ export default {
     margin: 0;
     padding: 10px 0;
 }
+
+.top-bar-left a {
+    display: inline-block; 
+    align-items: center;
+    justify-content: center;
+    margin-left: 20px;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+}
+
 </style>

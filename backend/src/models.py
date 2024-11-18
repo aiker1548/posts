@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import List, Dict
+from fastapi import WebSocket
 
 class User(BaseModel):
     username: str
@@ -14,6 +16,7 @@ class Post(BaseModel):
     title: str
     content: str
     author_id: int
+    post_tags: List[int]
 
 class PostResponse(BaseModel):
     id: int

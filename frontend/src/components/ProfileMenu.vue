@@ -2,7 +2,7 @@
     <div class="profile-menu" @mouseenter="showMenu" @mouseleave="hideMenu">
       <!-- Блок с иконкой профиля -->
       <div class="profile-icon-wrapper">
-        <img src="https://via.placeholder.com/50" alt="Профиль" class="profile-icon" />
+        <img :src="profileIcon" alt="Профиль" class="profile-icon" />
       </div>
 
       <!-- Меню -->
@@ -14,10 +14,13 @@
   </template>
   
   <script>
+  import profileIcon from '@/assets/userIcon.jpg'; // Импортируем изображение
+
   export default {
     data() {
       return {
-        isMenuVisible: false // Контролирует видимость меню
+        isMenuVisible: false, // Контролирует видимость меню
+        profileIcon // Добавляем в data
       };
     },
     methods: {

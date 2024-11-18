@@ -7,6 +7,7 @@
         <router-view 
           @login-success="handleLoginSuccess"
           :isLoggedIn="isLoggedIn"
+          :userId="userId"
         ></router-view>
       </main>
     </div>
@@ -42,6 +43,8 @@ export default {
 </script>
 
 <style>
+
+
 .btn {
   width: 60%;
   padding: 10px;

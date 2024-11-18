@@ -1,6 +1,6 @@
 import sys
 import os
-from backend.src.models import TagCreate, PostResponse
+from src.models import TagCreate, PostResponse
 import asyncpg
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
@@ -44,11 +44,11 @@ async def create_default_tags(conn: asyncpg.Connection = Depends(get_db_connecti
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при обновлении тегов: {str(e)}")
 
-@router.get("/tags")
-async def get_tags(conn: asyncpg.Connection = Depends(get_db_connection)):
+@router.get('/tags/all')
+async def get_all_tags(conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
-        query = "SELECT name FROM tags"
+        query = "SELECT name, id FROM tags"
         result = await conn.fetch(query)
-        return [row['name'] for row in result]
+        return [{"name": row['name'], "id": row['id']} for row in result]  # Изменен формат возвращаемых данных
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при получении тегов: {str(e)}")

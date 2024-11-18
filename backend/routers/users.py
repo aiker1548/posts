@@ -1,6 +1,6 @@
 import sys
 import os
-from backend.src.models import User, LoginUser
+from src.models import User, LoginUser
 import asyncpg
 from fastapi import APIRouter
 from fastapi import HTTPException

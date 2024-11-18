@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 from pathlib import Path
 import asyncpg
+import asyncio
 
 # Получаем абсолютный путь к текущему файлу
 current_file = Path(__file__).resolve()
@@ -19,6 +20,7 @@ load_dotenv(dotenv_path=env_path)
 
 
 async def create_tables():
+    load_dotenv(dotenv_path=env_path)
     commands = (
         '''
         CREATE TABLE IF NOT EXISTS users (
@@ -56,10 +58,15 @@ async def create_tables():
             tag_id INTEGER NOT NULL REFERENCES tags(id),
             PRIMARY KEY (post_id, tag_id)
         );
+        ''',
         '''
+        
+'''
     )
 
     try:
+        print(os.getenv("POSTGRES_PASSWORD"), os.getenv("POSTGRES_USER"), os.getenv("POSTGRES_HOST"), os.getenv("POSTGRES_PORT")
+              , os.getenv("POSTGRES_DB"))
         conn = await asyncpg.connect(
             database=os.getenv("POSTGRES_DB"),
             user=os.getenv("POSTGRES_USER"),
@@ -83,3 +90,8 @@ async def create_tables():
         logging.error("Ошибка подключения к базе данных")
         logging.error(conn_error)
         return False
+
+
+
+
+

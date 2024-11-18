@@ -1,6 +1,6 @@
 import sys
 import os
-from backend.src.models import Post, PostResponse
+from src.models import Post, PostResponse
 import asyncpg
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
@@ -24,14 +24,34 @@ async def get_db_connection():
 @router.post("/posts/create", response_model=PostResponse)
 async def create_post(post: Post, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
-        query = """
-        INSERT INTO posts (title, content, author_id, created_at)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, title, content, author_id, created_at
-        """
         created_at = datetime.utcnow()
-        row = await conn.fetchrow(query, post.title, post.content, post.author_id, created_at)
-        return PostResponse(**dict(row))
+        if post.post_tags:
+            query = """
+            WITH inserted AS (
+                INSERT INTO posts (title, content, author_id, created_at)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
+            )
+            INSERT INTO post_tags (post_id, tag_id)
+            SELECT (SELECT id FROM inserted), unnest($5::int[])
+            RETURNING (SELECT id FROM inserted);
+            """
+            row = await conn.fetchrow(query, post.title, post.content, post.author_id, created_at, post.post_tags)
+        else:
+            query = """
+            INSERT INTO posts (title, content, author_id, created_at)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id;
+            """
+            row = await conn.fetchrow(query, post.title, post.content, post.author_id, created_at)
+
+        # Проверка результата
+        if row is None:
+            print("Ошибка: вставка не удалась, row вернул None")
+
+ 
+        
+        return PostResponse(id=row[0], title=post.title, content=post.content, author_id=post.author_id, created_at=created_at, post_tags=post.post_tags)
     except asyncpg.PostgresError as error:
         raise HTTPException(
             status_code=500, detail=f"Ошибка при создании поста: {str(error)}"
@@ -104,3 +124,13 @@ async def delete_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_co
         )
 
 
+@router.get("/posts/user/{user_id}", response_model=List[PostResponse])
+async def get_posts_by_user(user_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
+    try:
+        query = "SELECT id, title, content, author_id, created_at FROM posts WHERE author_id = $1"
+        rows = await conn.fetch(query, user_id)
+        return [PostResponse(**dict(row)) for row in rows]
+    except asyncpg.PostgresError as error:
+        raise HTTPException(
+            status_code=500, detail=f"Ошибка при получении постов пользователя: {str(error)}"
+        )
