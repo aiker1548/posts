@@ -2,9 +2,18 @@ import sys
 import os
 from src.models import Post, PostResponse
 import asyncpg
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from typing import List
 from datetime import datetime
+import shutil
+from fastapi.responses import FileResponse
+
+UPLOAD_FOLDER = "uploads/images"
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 router = APIRouter()
 
@@ -22,50 +31,97 @@ async def get_db_connection():
         await conn.close()
 
 @router.post("/posts/create", response_model=PostResponse)
-async def create_post(post: Post, conn: asyncpg.Connection = Depends(get_db_connection)):
+async def create_post(
+    title: str = Form(...),
+    content: str = Form(...),
+    author_id: int = Form(...),
+    image: UploadFile = File(...),  # Обработка изображения
+    conn: asyncpg.Connection = Depends(get_db_connection)
+):
     try:
+        # Сохранение изображения
+        image_path = os.path.join(f'{UPLOAD_FOLDER}', image.filename)
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+
         created_at = datetime.utcnow()
-        if post.post_tags:
-            query = """
-            WITH inserted AS (
-                INSERT INTO posts (title, content, author_id, created_at)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id
-            )
-            INSERT INTO post_tags (post_id, tag_id)
-            SELECT (SELECT id FROM inserted), unnest($5::int[])
-            RETURNING (SELECT id FROM inserted);
-            """
-            row = await conn.fetchrow(query, post.title, post.content, post.author_id, created_at, post.post_tags)
-        else:
-            query = """
-            INSERT INTO posts (title, content, author_id, created_at)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id;
-            """
-            row = await conn.fetchrow(query, post.title, post.content, post.author_id, created_at)
-
-        # Проверка результата
-        if row is None:
-            print("Ошибка: вставка не удалась, row вернул None")
-
- 
         
-        return PostResponse(id=row[0], title=post.title, content=post.content, author_id=post.author_id, created_at=created_at, post_tags=post.post_tags)
-    except asyncpg.PostgresError as error:
-        raise HTTPException(
-            status_code=500, detail=f"Ошибка при создании поста: {str(error)}"
-        )
+        # Вставка поста в базу данных
+        query = """
+        INSERT INTO posts (title, content, author_id, created_at, image_path)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, title, content, author_id, created_at, image_path;
+        """
+        image_url = f"{UPLOAD_FOLDER}/{image.filename}"  # Ссылка на изображение
+        row = await conn.fetchrow(query, title, content, author_id, created_at, image_url)
+
+        # Возврат ответа с данными
+        if row:
+            return PostResponse(
+                id=row["id"],
+                title=row["title"],
+                content=row["content"],
+                author_id=row["author_id"],
+                created_at=row["created_at"].strftime('%Y-%m-%d %H:%M:%S'),
+                image_url=row["image_path"]
+            )
+        else:
+            raise HTTPException(status_code=400, detail="Ошибка при создании поста.")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при обработке запроса: {str(e)}")
+    
 
 @router.get("/posts", response_model=List[PostResponse])
 async def get_posts(conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
-        query = "SELECT id, title, content, author_id, created_at FROM posts ORDER BY created_at DESC"
+        # URL сервера (замените на ваш хост)
+        base_url = "http://localhost:8000"
+
+        query = """
+        SELECT id, title, content, author_id, created_at, image_path
+        FROM posts
+        ORDER BY created_at DESC
+        """
         rows = await conn.fetch(query)
-        return [PostResponse(**dict(row)) for row in rows]
+        
+        # Формируем список постов с ссылкой на изображение
+        posts = [
+            PostResponse(
+                id=row["id"],
+                title=row["title"],
+                content=row["content"],
+                author_id=row["author_id"],
+                created_at=row["created_at"],
+                image_url=f"{base_url}/posts/{row['id']}/download_image" if row["image_path"] else None
+            )
+            for row in rows
+        ]
+        return posts
     except asyncpg.PostgresError as error:
         raise HTTPException(
             status_code=500, detail=f"Ошибка при получении постов: {str(error)}"
+        )
+    
+@router.get("/posts/{post_id}/download_image")
+async def download_image(post_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
+    try:
+        # Запрос для получения пути к изображению
+        query = "SELECT image_path FROM posts WHERE id = $1"
+        row = await conn.fetchrow(query, post_id)
+        print(row)
+        if row and row["image_path"]:
+            image_path = row["image_path"]
+            print(image_path)
+            if os.path.exists(image_path):
+                return FileResponse(path=image_path, media_type="image/jpeg", filename=os.path.basename(image_path))
+            else:
+                raise HTTPException(status_code=404, detail="Изображение не найдено")
+        else:
+            raise HTTPException(status_code=404, detail="Пост или изображение не найдено")
+    except asyncpg.PostgresError as error:
+        raise HTTPException(
+            status_code=500, detail=f"Ошибка при скачивании изображения: {str(error)}"
         )
 
 @router.get("/posts/{post_id}", response_model=PostResponse)
@@ -127,9 +183,30 @@ async def delete_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_co
 @router.get("/posts/user/{user_id}", response_model=List[PostResponse])
 async def get_posts_by_user(user_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
-        query = "SELECT id, title, content, author_id, created_at FROM posts WHERE author_id = $1"
+        # URL сервера (замените на ваш хост)
+        base_url = "http://localhost:8000"
+
+        query = """
+        SELECT id, title, content, author_id, created_at, image_path
+        FROM posts
+        WHERE author_id = $1
+        ORDER BY created_at DESC
+        """
         rows = await conn.fetch(query, user_id)
-        return [PostResponse(**dict(row)) for row in rows]
+
+        # Формируем список постов с ссылкой на изображение
+        posts = [
+            PostResponse(
+                id=row["id"],
+                title=row["title"],
+                content=row["content"],
+                author_id=row["author_id"],
+                created_at=row["created_at"],
+                image_url=f"{base_url}/posts/{row['id']}/download_image" if row["image_path"] else None
+            )
+            for row in rows
+        ]
+        return posts
     except asyncpg.PostgresError as error:
         raise HTTPException(
             status_code=500, detail=f"Ошибка при получении постов пользователя: {str(error)}"

@@ -36,7 +36,8 @@ async def create_tables():
             title VARCHAR(255) NOT NULL,
             content TEXT NOT NULL,
             author_id INTEGER NOT NULL REFERENCES users(id),
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            image_path VARCHAR(255) DEFAULT NULL
         );
         ''',
         '''
@@ -59,9 +60,6 @@ async def create_tables():
             PRIMARY KEY (post_id, tag_id)
         );
         ''',
-        '''
-        
-'''
     )
 
     try:

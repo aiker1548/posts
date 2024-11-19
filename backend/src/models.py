@@ -24,6 +24,8 @@ class PostResponse(BaseModel):
     content: str
     author_id: int
     created_at: datetime
+    image_url: str = None
+    post_tags: List[int] = []
 
 class TagCreate(BaseModel):
     name: str

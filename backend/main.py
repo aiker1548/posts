@@ -9,6 +9,7 @@ from db import create_tables
 import logging
 from fastapi.middleware.cors import CORSMiddleware
 from routers import users_router, posts_router, tags_router
+from fastapi.staticfiles import StaticFiles
 
 
 # Set up logging
@@ -22,6 +23,8 @@ app = FastAPI()
 app.include_router(users_router)
 app.include_router(posts_router)
 app.include_router(tags_router)
+
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
 # CORS configuration
 origins = ["*"]
