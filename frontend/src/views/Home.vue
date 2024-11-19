@@ -7,7 +7,8 @@
 <script>
 
 import PostList from '@/components/PostList.vue';
-import axios from 'axios'
+import axiosInstance from '@/axiosInstance';
+
 
 export default {
   name: 'Home',
@@ -28,7 +29,7 @@ export default {
   methods: {
     async fetchPosts() {
       try {
-        const response = await axios.get('http://localhost:8000/posts')
+        const response = await axiosInstance.get('/posts')
         this.posts = response.data
       } catch (error) {
         console.error('Ошибка при загрузке постов:', error)

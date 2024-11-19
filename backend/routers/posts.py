@@ -76,7 +76,7 @@ async def create_post(
 async def get_posts(conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
         # URL сервера (замените на ваш хост)
-        base_url = "http://localhost:8000"
+        base_url = os.getenv("BASE_URL")
 
         query = """
         SELECT id, title, content, author_id, created_at, image_path
@@ -184,7 +184,7 @@ async def delete_post(post_id: int, conn: asyncpg.Connection = Depends(get_db_co
 async def get_posts_by_user(user_id: int, conn: asyncpg.Connection = Depends(get_db_connection)):
     try:
         # URL сервера (замените на ваш хост)
-        base_url = "http://localhost:8000"
+        base_url = os.getenv("BASE_URL")
 
         query = """
         SELECT id, title, content, author_id, created_at, image_path

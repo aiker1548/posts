@@ -46,7 +46,8 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axiosInstance from '@/axiosInstance';
+
 
 export default {
   name: 'Login',
@@ -59,7 +60,7 @@ export default {
   },
   methods: {
     login() {
-      axios.post('http://localhost:8000/users/login', { email: this.email, password: this.password })
+      axiosInstance.post('/users/login', { email: this.email, password: this.password })
         .then(response => {
           this.$emit('login-success', response.data.user_id)
           this.$router.push('/home')
@@ -70,7 +71,7 @@ export default {
 
     },
     register() {
-      axios.post('http://localhost:8000/users/register', { username: this.username, email: this.email, password: this.password })
+      axiosInstance.post('/users/register', { username: this.username, email: this.email, password: this.password })
         .then(response => {
           this.$emit('login-success', response.data.user_id)
           this.$router.push('/home')

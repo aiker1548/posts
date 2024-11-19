@@ -1,37 +1,37 @@
-import axios from 'axios';
+import axiosInstance from '@/axiosInstance';
 
 export const getPosts = async () => {
-    const response = await axios.get('http://localhost:8000/posts/all');
+    const response = await axiosInstance.get('/posts/all');
     return response.data;
 };
 
 export const getPostById = async (id) => {
-    const response = await axios.get(`http://localhost:8000/posts/${id}`);
+    const response = await axiosInstance.get(`/posts/${id}`);
     return response.data;
 };
 
 export const createPost = async (post) => {
-    const response = await axios.post('http://localhost:8000/posts/create', post);
+    const response = await axiosInstance.post('/posts/create', post);
     return response.data;
 };
 
 export const updatePost = async (id, post) => {
-    const response = await axios.put(`http://localhost:8000/posts/${id}`, post);
+    const response = await axiosInstance.put(`/posts/${id}`, post);
     return response.data;
 };
 
 export const deletePost = async (id) => {
-    const response = await axios.delete(`http://localhost:8000/posts/${id}`);
+    const response = await axiosInstance.delete(`/posts/${id}`);
     return response.data;
 };
 
 export const getPostsByUser = async (id) => {
-    const response = await axios.get(`http://localhost:8000/posts/user/${id}`);
+    const response = await axiosInstance.get(`/posts/user/${id}`);
     return response.data;
 };
 
 export const createPostWithImage = (formData) => {
-    return axios.post('http://localhost:8000/posts/create', formData, {
+    return axiosInstance.post('/posts/create', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

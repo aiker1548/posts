@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axiosInstance from '@/axiosInstance';
 
 export const getTags = async () => {
-    const response = await axios.get('http://localhost:8000/tags/all');
+    const response = await axiosInstance.get('/tags/all');
     return response.data;
 };
 
