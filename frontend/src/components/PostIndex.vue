@@ -1,9 +1,23 @@
 <template>
     <div class="post-index">
         <h3>{{ post.title }}</h3>
+        <img v-if="post.image_url" :src="post.image_url" alt="Post Image" class="post-image" />
+        <p v-else class="no-image">Нет изображения</p>
+
         <p>{{ post.content }}</p>
         <p><small>Автор: {{ post.author_id }}</small></p>
         <p><small>Создано: {{ formatDate(post.created_at) }}</small></p>
+
+        <!-- Кнопка скачивания фото -->
+        <a 
+            v-if="post.image_url" 
+            :href="post.image_url" 
+            download 
+            class="download-button"
+        >
+            Скачать фото
+        </a>
+
         <button @click="deletePost(post.id)">Удалить</button>
     </div>
 </template>
@@ -80,5 +94,38 @@ export default {
 .post-index button:active {
     background-color: #ff1f1f;
 }
-</style>
 
+.post-index img {
+    display: block;
+    width: 300px; /* Фиксированная ширина */
+    height: 200px; /* Фиксированная высота */
+    object-fit: cover; /* Устанавливает обрезку для заполнения рамки */
+    margin: 16px 0;
+    border-radius: 8px;
+}
+
+.post-index .no-image {
+    color: #aaa;
+    font-style: italic;
+}
+/* Стили кнопки скачивания */
+.download-button {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.download-button:hover {
+    background-color: #218838;
+}
+
+.download-button:active {
+    background-color: #1e7e34;
+}
+</style>

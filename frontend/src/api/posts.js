@@ -29,3 +29,11 @@ export const getPostsByUser = async (id) => {
     const response = await axios.get(`http://localhost:8000/posts/user/${id}`);
     return response.data;
 };
+
+export const createPostWithImage = (formData) => {
+    return axios.post('http://localhost:8000/posts/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+}

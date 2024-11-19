@@ -1,69 +1,100 @@
 <template>
     <div class="post-create">
-        <div class="post-header">
-
-        </div>
-        <input v-model="post.title" class="post-title" placeholder="Введите заголовок..." /> <!-- Добавлено поле для заголовка -->
-        <textarea v-model="post.content" class="post-input" placeholder="Напишите что-то..."></textarea>
-        <circle-indicator :selectedTags="post.post_tags"></circle-indicator>
-        <div class="post-footer">
-            <div class="post-options">
-                <button class="option-button">Фото/Видео</button>
-                <button class="option-button">Музыка</button>
-            </div>
-            <button class="publish-button" @click="createPost">Опубликовать</button>
-        </div>
+      <div class="post-header">
+      </div>
+      <input v-model="post.title" class="post-title" placeholder="Введите заголовок..." />
+      <textarea v-model="post.content" class="post-input" placeholder="Напишите что-то..."></textarea>
+      <circle-indicator :selectedTags="post.post_tags"></circle-indicator>
+      
+      <div class="file-upload">
+        <label for="image-upload" class="option-button">Выберите фото/видео</label>
+        <input id="image-upload" type="file" @change="handleImageUpload" accept="image/*" hidden />
+        <span v-if="selectedImage" class="file-name">Выбрано: {{ selectedImage.name }}</span>
+      </div>
+  
+      <div class="post-footer">
+        <button class="publish-button" @click="createPost">Опубликовать</button>
+      </div>
     </div>
-</template>
-
-<script>
-import CircleIndicator from '@/components/CircleIndicator.vue';
-import { createPost } from '@/api/posts';
-export default {
+  </template>
+  
+  <script>
+  import CircleIndicator from '@/components/CircleIndicator.vue';
+  import { createPostWithImage } from '@/api/posts';
+  
+  export default {
     name: 'PostCreate',
     components: {
-        CircleIndicator
+      CircleIndicator,
     },
     data() {
-        return {
-            post: {
-                title: '',
-                content: '',
-                post_tags: [],
-                author_id: this.userId
-            },
-        }
-    },
-    created() {
-        this.post.author_id = this.userId
+      return {
+        post: {
+          title: '',
+          content: '',
+          post_tags: [],
+          author_id: this.userId,
+        },
+        selectedImage: null, // Выбранное изображение
+      };
     },
     props: {
-        userId: {
-            type: Number,
-            required: true
-        }
+      userId: {
+        type: Number,
+        required: true,
+      },
     },
     methods: {
-        createPost() {
-            console.log('Создание поста', this.post); // Вывод информации о посте, включая теги
-            this.post.post_tags = this.post.post_tags.map(tag => tag.id)
-            createPost(this.post).then(response => {
-                console.log('Пост успешно создан', response);
-            }).catch(error => {
-                console.error('Ошибка при создании поста', error);
-            });
-            this.post.post_tags = []
-            this.$router.push('/myposts')
+      handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          this.selectedImage = file;
         }
-    }
-}
-</script>
+      },
+      async createPost() {
+        if (!this.post.title || !this.post.content) {
+          alert('Введите заголовок и содержание поста!');
+          return;
+        }
+  
+        const formData = new FormData();
+        formData.append('title', this.post.title);
+        formData.append('content', this.post.content);
+        formData.append('author_id', this.post.author_id);
+        if (this.selectedImage) {
+          formData.append('image', this.selectedImage);
+        }
+  
+        try {
+          const response = await createPostWithImage(formData);
+          console.log('Пост успешно создан', response);
+          this.$router.push('/myposts'); // Перенаправление после создания поста
+        } catch (error) {
+          console.error('Ошибка при создании поста', error);
+          alert('Ошибка при создании поста. Попробуйте снова.');
+        }
+      },
+    },
+  };
+  </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
 
 body {
     font-family: 'Roboto', sans-serif; /* Используем мягкий шрифт Roboto */
+}
+
+/* Остальные стили остаются такими же */
+.file-upload {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.file-name {
+  font-size: 14px;
+  color: #555;
 }
 
 .post-create {

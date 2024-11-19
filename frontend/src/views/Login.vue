@@ -62,7 +62,7 @@ export default {
       axios.post('http://localhost:8000/users/login', { email: this.email, password: this.password })
         .then(response => {
           this.$emit('login-success', response.data.user_id)
-          this.$router.push('/')
+          this.$router.push('/home')
         })
         .catch(error => {
           console.error('Ошибка при авторизации:', error)
@@ -73,7 +73,7 @@ export default {
       axios.post('http://localhost:8000/users/register', { username: this.username, email: this.email, password: this.password })
         .then(response => {
           this.$emit('login-success', response.data.user_id)
-          this.$router.push('/')
+          this.$router.push('/home')
         })
         .catch(error => {
           console.error('Ошибка при регистрации:', error)
